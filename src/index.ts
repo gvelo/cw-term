@@ -1,13 +1,28 @@
-import { Terminal } from "@xterm/xterm";
-import '@xterm/xterm/css/xterm.css';
-
+import { RootApp } from "./root";
+import { Terminal } from "./Terminal";
 let termDiv = document.getElementById("terminal");
-let term = new Terminal();
-term.open(termDiv!);
-term.write('Hello world');
-let cw = new jscw();
-cw.setText("hello world");
-cw.play();
+
+const term = new Terminal(termDiv!);
+
+writeWellcome(term);
+
+const root = new RootApp(term);
+root.start();
+
+
+// term.onKey((e: { key: string, domEvent: KeyboardEvent }) => {
+//     term.write(e.key);
+//     let cw = new jscw();
+//     cw.setText(groupsStr);
+//     cw.setEff(6);
+//     cw.setWpm(20);
+//     cw.play();
+// })
+
+function writeWellcome(term: Terminal) {
+    term.println("wellcome to cw-terminal");
+}
+
 
 
 
