@@ -20,7 +20,7 @@ root.start();
 // })
 
 function writeWellcome(term: Terminal) {
-    term.println("wellcome to cw-terminal");
+    term.writeln("wellcome to cw-terminal");
 }
 
 

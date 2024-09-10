@@ -1,74 +1,102 @@
-import { App } from "./app";
+// Copyright 2024 The cw-console authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { Config } from "./config";
-import { Cw } from "./cw";
-import { Koch } from "./koch";
+import { Tx } from "./tx";
 import { Terminal } from "./Terminal";
+import { TxCommand } from "./txcmd";
 
 export class RootApp {
-  terminal: Terminal;
-  cw: Cw;
-  config: Config;
-  activeApp: App | null;
-  koch: Koch;
-  //callsigns: CallSigns;
+  private terminal: Terminal;
+  private tx: Tx;
+  private config: Config;
+  private txCmd: TxCommand;
 
   constructor(terminal: Terminal) {
     this.terminal = terminal;
     this.config = new Config();
-    this.cw = new Cw();
-    this.activeApp = null;
-    this.koch = new Koch(this.config, this.cw, this.terminal);
+    this.tx = new Tx();
+    this.txCmd = new TxCommand(this.terminal, this.tx);
   }
 
   async start() {
     while (true) {
-      const prompt = this.activeApp ? this.activeApp.prompt() : "cw-console> ";
-      const line = (await this.terminal.readLine(prompt)).trim();
+      const prompt = "cw-console: ";
+      const line = await this.terminal.readLine(prompt);
       if (line) {
-        this.processLine(line.trim().split(" "));
+        await this.processLine(line);
       }
-      console.log("reading .... ");
     }
   }
 
-  processLine(line: string[]) {
-    switch (line[0]) {
-      case "eff":
-        this.setEff(line);
-        break;
-      default:
-        if (this.activeApp) {
-          this.activeApp.processLine(line);
-        } else {
-          switch (line[0]) {
-            case "koch":
-              this.activate(this.koch);
-              break;
-            case "qso":
-              break;
-            case "callsigns":
-              break;
-            case "words":
-              break;
-            case "help":
-              this.printHelp();
-              break;
-            default:
-              this.terminal.println(`command not found: {str}`);
-          }
-        }
-    }
-  }
-
-  activate(app: App) {
-    this.activeApp = app;
-    //TODO: set the event liseners.
-  }
-  setEff(line: string[]) {
+  async processLine(line: string) {
     console.log(line);
+    const argv = this.parseCommandLine(line);
+    console.log(argv);
+    if (argv) {
+      const cmd = argv[0];
+      switch (cmd) {
+        case "help":
+          this.printAppHelp();
+          break;
+        case "kock":
+          break;
+        case "tx":
+          await this.txCmd.exec(argv);
+          break;
+
+        default:
+          this.terminal.writeln(`command not found: ${cmd}`);
+          break;
+      }
+    }
   }
-  printHelp() {
-    this.terminal.println("help");
+
+  parseCommandLine(command: string): string[] {
+    const argv: string[] = [];
+    let currentArg = "";
+    let inQuotes = false;
+    let escape = false;
+
+    for (let i = 0; i < command.length; i++) {
+      const char = command[i];
+
+      if (escape) {
+        currentArg += char;
+        escape = false;
+      } else if (char === "\\") {
+        escape = true;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === " " && !inQuotes) {
+        if (currentArg.length > 0) {
+          argv.push(currentArg);
+          currentArg = "";
+        }
+      } else {
+        currentArg += char;
+      }
+    }
+
+    if (currentArg.length > 0) {
+      argv.push(currentArg);
+    }
+
+    return argv;
   }
-  //const customChalk = new Chalk({level: 2});
+
+  printAppHelp() {
+    this.terminal.writeln("help");
+  }
 }

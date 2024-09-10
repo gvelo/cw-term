@@ -14,15 +14,15 @@
 
 import { EventEmitter, EventListener } from "./emiter";
 
-type TxStartEvent = {
+export type TxStartEvent = {
   message: string;
 };
 
-type TxStopEvent = {
+export type TxStopEvent = {
   message: string;
 };
 
-type TxCharEvent = {
+export type TxCharEvent = {
   message: string;
   idx: number;
 };
@@ -47,9 +47,9 @@ export class Tx {
     this._message = "";
     this.txCharIdx = 0;
     this._eff = 0;
-    this._wpm = 0;
-    this._freq = 0;
-    this._volume = 0;
+    this._wpm = 20;
+    this._freq = 600;
+    this._volume = 0.5;
 
     this.startEmitter = new EventEmitter<TxStartEvent>();
     this.stopEmitter = new EventEmitter<TxStopEvent>();
