@@ -13,12 +13,15 @@
 // limitations under the License.
 
 import { Terminal } from "./Terminal";
-import { Tx, TxStopEvent } from "./tx";
-import { EventListener } from "./emiter";
+import { Tx } from "./tx";
+import { theme } from "./theme";
+
+type TxConfigProperty = "wpm" | "eff" | "freq" | "volume";
+const txConfigKeys: TxConfigProperty[] = ["wpm", "eff", "freq", "volume"];
 
 interface TxConfigCmd {
   action: "show" | "set";
-  property?: "wpm" | "eff" | "freq" | "volume";
+  property?: TxConfigProperty;
   value?: number;
 }
 
@@ -77,12 +80,10 @@ Examples:
     try {
       switch (command) {
         case "config":
-          const configCmd = this.parseConfigCommand(restArgs);
-          this.execConfigCmd(configCmd);
+          this.execConfigCmd(this.parseConfigCommand(restArgs));
           break;
         case "send":
-          const sendCmd = this.parseSendCommand(restArgs);
-          await this.execSendCmd(sendCmd);
+          await this.execSendCmd(this.parseSendCommand(restArgs));
           break;
         case "--help":
         case "-h":
@@ -102,7 +103,7 @@ Examples:
     }
   }
 
-  parseConfigCommand(args: string[]): TxConfigCmd {
+  private parseConfigCommand(args: string[]): TxConfigCmd {
     if (args.length === 0 || args[0] === "--show") {
       return { action: "show" };
     }
@@ -127,7 +128,7 @@ Examples:
     throw new Error("Invalid config command");
   }
 
-  parseSendCommand(args: string[]): TxSendCmd {
+  private parseSendCommand(args: string[]): TxSendCmd {
     const cmd: TxSendCmd = { message: "" };
     let i = 0;
 
@@ -173,19 +174,43 @@ Examples:
     return cmd;
   }
 
-  execConfigCmd(cmd: TxConfigCmd): void {
-    // Implementation for executing config command
+  private execConfigCmd(cmd: TxConfigCmd): void {
+    if (cmd.action === "show") {
+      this.showConfig();
+    } else if (cmd.property && cmd.value !== undefined) {
+      this.setConfig(cmd.property, cmd.value);
+    }
   }
 
-  async execSendCmd(cmd: TxSendCmd) {
+  private showConfig() {
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info("tx configuration:"));
+    this.terminal.writeln();
 
+    for (const key of txConfigKeys) {
+      this.terminal.write(key);
+      this.terminal.write("\t");
+      this.terminal.writeln(theme.info(String(this.tx[key])));
+    }
+
+    this.terminal.writeln();
+  }
+
+  private setConfig(property: TxConfigProperty, value: number): void {
+    if (property in this.tx) {
+      this.tx[property] = value;
+      this.terminal.write(`\n ${property} set to ${theme.info(value)} \n\n`);
+    }
+  }
+
+  private async execSendCmd(cmd: TxSendCmd) {
     let resolve: (value: void | PromiseLike<void>) => void;
 
     const promise = new Promise<void>((res) => {
       resolve = res;
     });
 
-    let onTxStop = () => {
+    const onTxStop = () => {
       this.tx.removeStopEventListener(onTxStop);
       resolve();
     };

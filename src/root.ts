@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Config } from "./config";
+import { ConfStorage } from "./config";
 import { Tx } from "./tx";
 import { Terminal } from "./Terminal";
 import { TxCommand } from "./txcmd";
@@ -20,13 +20,13 @@ import { TxCommand } from "./txcmd";
 export class RootApp {
   private terminal: Terminal;
   private tx: Tx;
-  private config: Config;
+  private storage: ConfStorage;
   private txCmd: TxCommand;
 
   constructor(terminal: Terminal) {
     this.terminal = terminal;
-    this.config = new Config();
-    this.tx = new Tx();
+    this.storage = new ConfStorage();
+    this.tx = new Tx(this.storage);
     this.txCmd = new TxCommand(this.terminal, this.tx);
   }
 

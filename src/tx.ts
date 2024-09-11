@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { ConfStorage } from "./config";
 import { EventEmitter, EventListener } from "./emiter";
+
+const CONF_STORAGE_KEY = "tx";
 
 export type TxStartEvent = {
   message: string;
@@ -27,6 +30,13 @@ export type TxCharEvent = {
   idx: number;
 };
 
+interface TxConfig {
+  wpm: number;
+  eff: number;
+  freq: number;
+  volume: number;
+}
+
 export class Tx {
   private readonly jscw: jscw;
   private _message: string;
@@ -36,20 +46,14 @@ export class Tx {
   private readonly stopEmitter: EventEmitter<TxStopEvent>;
   private readonly charEmitter: EventEmitter<TxCharEvent>;
 
-  private _wpm: number;
-  private _eff: number;
-  private _freq: number;
-  private _volume: number;
+  private readonly conf: TxConfig;
+  private readonly storage: ConfStorage;
 
-  constructor() {
+  constructor(storage: ConfStorage) {
     this.jscw = new jscw();
 
     this._message = "";
     this.txCharIdx = 0;
-    this._eff = 0;
-    this._wpm = 20;
-    this._freq = 600;
-    this._volume = 0.5;
 
     this.startEmitter = new EventEmitter<TxStartEvent>();
     this.stopEmitter = new EventEmitter<TxStopEvent>();
@@ -58,6 +62,14 @@ export class Tx {
     this.jscw.onFinished = () => this.handleStop();
     this.jscw.onPlay = () => this.handlePlay();
     this.jscw.onCharacterPlay = () => this.handlePlayingCharacter();
+
+    this.storage = storage;
+    this.conf = storage.get(CONF_STORAGE_KEY) ?? {
+      wpm: 20,
+      eff: 0,
+      freq: 600,
+      volume: 0.5,
+    };
   }
 
   send(
@@ -70,10 +82,10 @@ export class Tx {
     this._message = message;
     this.txCharIdx = 0;
 
-    const txWpp = wpm ?? this._wpm;
-    const txEff = eff ?? this._eff;
-    const txFreq = freq ?? this._freq;
-    const txVolume = volume ?? this._volume;
+    const txWpp = wpm ?? this.conf.wpm;
+    const txEff = eff ?? this.conf.eff;
+    const txFreq = freq ?? this.conf.freq;
+    const txVolume = volume ?? this.conf.volume;
 
     this.jscw.setWpm(txWpp);
     this.jscw.setEff(txEff);
@@ -87,39 +99,39 @@ export class Tx {
   }
 
   public get wpm(): number {
-    return this._wpm;
+    return this.conf.wpm;
   }
 
   public set wpm(wpm: number) {
-    // TODO: save to config.
-    this._wpm = wpm;
+    this.conf.wpm = wpm;
+    this.saveConf();
   }
 
   public get eff(): number {
-    return this._eff;
+    return this.conf.eff;
   }
 
   public set eff(eff: number) {
-    // TODO: save to config.
-    this._eff = eff;
+    this.conf.eff = eff;
+    this.saveConf();
   }
 
   public get freq(): number {
-    return this._freq;
+    return this.conf.freq;
   }
 
   public set freq(freq: number) {
-    // TODO: save to config.
-    this._freq = freq;
+    this.conf.freq = freq;
+    this.saveConf();
   }
 
   public set volume(vol: number) {
-    // TODO: save to config.
-    this._volume = vol;
+    this.conf.volume = vol;
+    this.saveConf();
   }
 
   public get volume(): number {
-    return this._volume;
+    return this.conf.volume;
   }
 
   public get message(): string {
@@ -164,5 +176,9 @@ export class Tx {
       message: this._message,
       idx: this.txCharIdx,
     });
+  }
+
+  private saveConf() {
+    this.storage.set(CONF_STORAGE_KEY, this.conf);
   }
 }
