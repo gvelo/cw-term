@@ -203,22 +203,15 @@ Examples:
     }
   }
 
-  private async execSendCmd(cmd: TxSendCmd) {
-    let resolve: (value: void | PromiseLike<void>) => void;
+  private async execSendCmd(cmd: TxSendCmd): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const onTxStop = () => {
+        this.tx.removeStopEventListener(onTxStop);
+        resolve();
+      };
 
-    const promise = new Promise<void>((res) => {
-      resolve = res;
+      this.tx.addStopEventListener(onTxStop);
+      this.tx.send(cmd.message, cmd.wpm, cmd.eff, cmd.freq, cmd.volume);
     });
-
-    const onTxStop = () => {
-      this.tx.removeStopEventListener(onTxStop);
-      resolve();
-    };
-
-    this.tx.addStopEventListener(onTxStop);
-
-    this.tx.send(cmd.message, cmd.wpm, cmd.eff, cmd.freq, cmd.volume);
-
-    return promise;
   }
 }
