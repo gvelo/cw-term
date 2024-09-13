@@ -30,7 +30,11 @@ export type TxCharEvent = {
   idx: number;
 };
 
-interface TxConfig {
+export type TxConfChange = {
+  conf: TxConfig;
+};
+
+export interface TxConfig {
   wpm: number;
   eff: number;
   freq: number;
@@ -45,7 +49,7 @@ export class Tx {
   private readonly startEmitter: EventEmitter<TxStartEvent>;
   private readonly stopEmitter: EventEmitter<TxStopEvent>;
   private readonly charEmitter: EventEmitter<TxCharEvent>;
-
+  private readonly confEmitter: EventEmitter<TxConfChange>;
   private readonly conf: TxConfig;
   private readonly storage: ConfStorage;
 
@@ -58,6 +62,7 @@ export class Tx {
     this.startEmitter = new EventEmitter<TxStartEvent>();
     this.stopEmitter = new EventEmitter<TxStopEvent>();
     this.charEmitter = new EventEmitter<TxCharEvent>();
+    this.confEmitter = new EventEmitter<TxConfChange>();
 
     this.jscw.onFinished = () => this.handleStop();
     this.jscw.onPlay = () => this.handlePlay();
@@ -162,6 +167,10 @@ export class Tx {
     this.charEmitter.removeListener(listener);
   }
 
+  public addConfEventListener(listener: EventListener<TxConfChange>): void {
+    this.confEmitter.addListener(listener);
+  }
+
   private handleStop(): void {
     this.stopEmitter.emit({ message: this._message });
   }
@@ -180,5 +189,6 @@ export class Tx {
 
   private saveConf() {
     this.storage.set(CONF_STORAGE_KEY, this.conf);
+    this.confEmitter.emit({ conf: this.conf });
   }
 }

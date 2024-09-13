@@ -13,26 +13,42 @@
 // limitations under the License.
 
 import { ResizeEvent, Terminal } from "./Terminal";
-import { Tx } from "./tx";
+import { Tx, TxCharEvent } from "./tx";
+import { theme } from "./theme";
+const enum TxStatus {
+  transmitting = "transmitting",
+  idle = "idle",
+}
 
 export class StatusBar {
   private terminal: Terminal;
   private tx: Tx;
   private cmd: string;
+  private msgLenght: number;
+  private txCharIdx: number;
+  private txStatus: TxStatus;
 
   constructor(terminal: Terminal, tx: Tx) {
     this.terminal = terminal;
     this.tx = tx;
+    this.tx.addCharEventListener(this.onTxChar);
+    this.tx.addStartEventListener(this.onTxStart);
+    this.tx.addStopEventListener(this.onTxStop);
+    this.tx.addConfEventListener(this.onTxConfChange);
     this.terminal.addResizeEventListener(this.onResize);
     this.terminal.addClearEventListener(this.onClear);
     this.setViewPort();
     this.cmd = "";
+    this.msgLenght = 0;
+    this.txCharIdx = 0;
+    this.txStatus = TxStatus.idle;
     this.render();
     this.setViewPort();
   }
 
   setCmd(cmd: string): void {
     this.cmd = cmd;
+    this.render();
   }
 
   private onResize = (event: ResizeEvent): void => {
@@ -53,6 +69,29 @@ export class StatusBar {
     this.render();
   };
 
+  private onTxChar = (event: TxCharEvent) => {
+    this.txCharIdx = event.idx;
+    this.msgLenght = event.message.length;
+    this.render();
+  };
+
+  private onTxStart = () => {
+    this.txStatus = TxStatus.transmitting;
+    this.txCharIdx = 0;
+    this.msgLenght = 0;
+    this.render();
+  };
+  private onTxStop = () => {
+    this.txStatus = TxStatus.idle;
+    this.txCharIdx = 0;
+    this.msgLenght = 0;
+    this.render();
+  };
+
+  private onTxConfChange = () => {
+    this.render();
+  };
+
   private setViewPort(): void {
     const lastLine = this.terminal.rows - 1;
     this.terminal.write(`\u001B[0;${lastLine}r`);
@@ -61,7 +100,8 @@ export class StatusBar {
   private render = (): void => {
     this.saveCursor();
     this.cursorTo(this.terminal.rows, 0);
-    this.terminal.write(`hello world`);
+    const status = this.generateStatusBar();
+    this.terminal.write(status);
     this.restoreCursor();
   };
 
@@ -79,5 +119,38 @@ export class StatusBar {
 
   private eraseLine(): void {
     this.terminal.write("\u001B[2K");
+  }
+
+  public generateStatusBar(): string {
+    const bar = this.buildStatusStr(0);
+    const padding = this.terminal.cols - bar.length;
+    if (padding < 0) {
+      return "";
+    } else {
+      return theme.statusBar(this.buildStatusStr(padding));
+    }
+  }
+
+  public buildStatusStr(padding: number): string {
+    const paddedCmd = this.cmd.padEnd(10);
+    const paddedStatus = String(this.txStatus).padEnd(15);
+    const progressBar = this.generateProgressBar();
+    const txCharIdx = String(this.txCharIdx).padStart(3);
+    const msgLength = String(this.msgLenght).padEnd(3);
+    const pad = " ".repeat(padding);
+    const statusBar = `cw-terminal | command:${paddedCmd}  status:${paddedStatus} ${progressBar} ${txCharIdx}/${msgLength} ${pad}wpm:${this.tx.wpm}  eff:${this.tx.eff}  tone:${this.tx.freq}Hz  volume:${this.tx.volume}`;
+    return statusBar;
+  }
+
+  private generateProgressBar(): string {
+    const barLength = 20; // Total length of the progress bar
+    let filledLength = 0;
+
+    if (this.msgLenght) {
+      filledLength = Math.round((this.txCharIdx / this.msgLenght) * barLength);
+    }
+
+    const emptyLength = barLength - filledLength;
+    return `[${"=".repeat(filledLength)}${" ".repeat(emptyLength)}]`;
   }
 }

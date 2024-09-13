@@ -40,13 +40,12 @@ export class RootApp {
       if (line) {
         await this.processLine(line);
       }
+      this.statusBar.setCmd("");
     }
   }
 
   async processLine(line: string) {
-    console.log(line);
     const argv = this.parseCommandLine(line);
-    console.log(argv);
     if (argv) {
       const cmd = argv[0];
       switch (cmd) {
@@ -56,6 +55,7 @@ export class RootApp {
         case "kock":
           break;
         case "tx":
+          this.statusBar.setCmd("tx");
           await this.txCmd.exec(argv);
           break;
 
