@@ -16,18 +16,21 @@ import { ConfStorage } from "./config";
 import { Tx } from "./tx";
 import { Terminal } from "./Terminal";
 import { TxCommand } from "./txcmd";
+import { StatusBar } from "./statusbar";
 
 export class RootApp {
   private terminal: Terminal;
   private tx: Tx;
   private storage: ConfStorage;
   private txCmd: TxCommand;
+  private statusBar: StatusBar;
 
   constructor(terminal: Terminal) {
     this.terminal = terminal;
     this.storage = new ConfStorage();
     this.tx = new Tx(this.storage);
     this.txCmd = new TxCommand(this.terminal, this.tx);
+    this.statusBar = new StatusBar(this.terminal, this.tx);
   }
 
   async start() {
