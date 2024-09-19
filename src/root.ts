@@ -17,12 +17,14 @@ import { Tx } from "./tx";
 import { Terminal } from "./Terminal";
 import { TxCommand } from "./txcmd";
 import { StatusBar } from "./statusbar";
+import { KochCommand } from "./koch/cmd";
 
 export class RootApp {
   private terminal: Terminal;
   private tx: Tx;
   private storage: ConfStorage;
   private txCmd: TxCommand;
+  private kochCmd: KochCommand;
   private statusBar: StatusBar;
 
   constructor(terminal: Terminal) {
@@ -30,6 +32,7 @@ export class RootApp {
     this.storage = new ConfStorage();
     this.tx = new Tx(this.storage);
     this.txCmd = new TxCommand(this.terminal, this.tx);
+    this.kochCmd = new KochCommand(this.terminal, this.tx);
     this.statusBar = new StatusBar(this.terminal, this.tx);
   }
 
@@ -52,7 +55,8 @@ export class RootApp {
         case "help":
           this.printAppHelp();
           break;
-        case "kock":
+        case "koch":
+          await this.kochCmd.exec(argv);
           break;
         case "tx":
           this.statusBar.setCmd("tx");
