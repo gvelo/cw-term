@@ -61,7 +61,9 @@ export class Koch {
   }
 
   public showLesson(lessonNum: number): void {
-    console.log(lessonNum);
+    if (lessonNum < 0 || lessonNum > 40) {
+      throw new Error(`invalid lesson number: ${lessonNum}`);
+    }
 
     // Fallback to current lesson if lessonNum is 0
     if (lessonNum === 0) {
@@ -106,7 +108,18 @@ export class Koch {
     }
   }
 
-  public setLesson(lessonNumber: number): void {}
+  public setLesson(lessonNum: number): void {
+    if (lessonNum < 0 || lessonNum > 40) {
+      throw new Error(`invalid lesson number: ${lessonNum}`);
+    }
+
+    this.conf.currentLesson = lessonNum;
+
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info(`lesson set to : ${lessonNum}`));
+    this.showLesson(lessonNum);
+  }
+
   public listen(params: PlaybackParams): void {}
   public practice(params: PlaybackParams): void {}
   public practiceCustomChars(

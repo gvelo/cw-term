@@ -293,13 +293,14 @@ export class KochCommand {
   }
 
   private execLessonCommand(cmd: KochLessonCmd) {
+    console.log(cmd);
     if (cmd.list) {
       this.koch.listLessons();
     } else if (cmd.show != undefined) {
       this.koch.showLesson(cmd.show);
       return;
     } else if (cmd.lesson !== undefined) {
-      console.log(`Setting lesson to ${cmd.lesson}`);
+      this.koch.setLesson(cmd.lesson);
     } else {
       console.log("Unknown lesson command.");
     }
