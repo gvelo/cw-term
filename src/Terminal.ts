@@ -61,13 +61,13 @@ export class Terminal {
     });
   }
 
-  write(str: string) {
-    this.xterm.write(str);
+  write(obj: any) {
+    this.xterm.write(String(obj));
   }
 
-  writeln(str?: string) {
-    if (str) {
-      this.xterm.write(str + "\r\n");
+  writeln(obj?: any) {
+    if (obj) {
+      this.xterm.write(String(obj) + "\r\n");
     } else {
       this.xterm.write("\r\n");
     }

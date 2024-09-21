@@ -32,7 +32,7 @@ export class RootApp {
     this.storage = new ConfStorage();
     this.tx = new Tx(this.storage);
     this.txCmd = new TxCommand(this.terminal, this.tx);
-    this.kochCmd = new KochCommand(this.terminal, this.tx);
+    this.kochCmd = new KochCommand(this.terminal, this.tx, this.storage);
     this.statusBar = new StatusBar(this.terminal, this.tx);
   }
 

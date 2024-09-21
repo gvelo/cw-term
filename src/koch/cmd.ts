@@ -1,6 +1,22 @@
+// Copyright 2024 The cw-console authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { ConfStorage } from "../config";
 import { Terminal } from "../Terminal";
 import { theme } from "../theme";
 import { Tx } from "../tx";
+import { Koch } from "./koch";
 
 interface KochHelpCmd {
   subcommand?: string;
@@ -37,10 +53,12 @@ interface KochLessonCmd {
 export class KochCommand {
   private terminal: Terminal;
   private tx: Tx;
+  private koch: Koch;
 
-  constructor(terminal: Terminal, tx: Tx) {
+  constructor(terminal: Terminal, tx: Tx, storage: ConfStorage) {
     this.terminal = terminal;
     this.tx = tx;
+    this.koch = new Koch(terminal, tx, storage);
   }
 
   public async exec(argv: string[]) {
@@ -76,13 +94,13 @@ export class KochCommand {
         this.execConfigCommand(this.parseConfigCommand(restArgs));
         break;
       case "listen":
-        this.execListenCommand(this.parseListenCommand(restArgs.slice(3)));
+        this.execListenCommand(this.parseListenCommand(restArgs));
         break;
       case "practice":
-        this.execPracticeCommand(this.parsePracticeCommand(argv.slice(3)));
+        this.execPracticeCommand(this.parsePracticeCommand(restArgs));
         break;
       case "lesson":
-        this.execLessonCommand(this.parseLessonCommand(argv.slice(3)));
+        this.execLessonCommand(this.parseLessonCommand(restArgs));
         break;
       default:
         throw new Error(
@@ -197,8 +215,9 @@ export class KochCommand {
 
   private parseLessonCommand(args: string[]): KochLessonCmd {
     const lessonCmd: KochLessonCmd = {};
-
+    console.log(args);
     if (args.length == 0) {
+      lessonCmd.show = 0;
       return lessonCmd;
     }
 
@@ -209,12 +228,15 @@ export class KochCommand {
       switch (arg) {
         case "--list":
           lessonCmd.list = true;
-          break;
+          return lessonCmd;
         case "--show":
           lessonCmd.show = parseInt(args[++i], 10);
-          break;
+          return lessonCmd;
         default:
           lessonCmd.lesson = parseInt(arg, 10);
+          if (isNaN(lessonCmd.lesson)) {
+            throw new Error("invalid lesson number");
+          }
           break;
       }
       i++;
@@ -272,9 +294,10 @@ export class KochCommand {
 
   private execLessonCommand(cmd: KochLessonCmd) {
     if (cmd.list) {
-      console.log("Listing all lessons...");
-    } else if (cmd.show !== undefined) {
-      console.log(`Showing lesson ${cmd.show}`);
+      this.koch.listLessons();
+    } else if (cmd.show != undefined) {
+      this.koch.showLesson(cmd.show);
+      return;
     } else if (cmd.lesson !== undefined) {
       console.log(`Setting lesson to ${cmd.lesson}`);
     } else {

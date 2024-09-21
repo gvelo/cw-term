@@ -20,12 +20,16 @@ interface Theme {
   readonly error: ChalkInstance;
   readonly info: ChalkInstance;
   readonly statusBar: ChalkInstance;
+  readonly passed: ChalkInstance;
+  readonly pending: ChalkInstance;
 }
 
 const defaultTheme: Theme = {
   error: colors.redBright,
   info: colors.yellowBright,
   statusBar: colors.bgBlueBright,
+  passed: colors.green,
+  pending: colors.redBright,
 };
 
 export const theme = defaultTheme;
