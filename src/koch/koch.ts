@@ -161,7 +161,13 @@ export class Koch {
       };
 
       const txChar = (char: string) => {
-        this.tx.send(char.repeat(10) + " ");
+        this.tx.send(
+          char.repeat(10) + " ",
+          params.wpm,
+          params.eff,
+          params.freq,
+          params.volume
+        );
       };
 
       const onKeyPressed = (event: KeyboardEvent): boolean => {
