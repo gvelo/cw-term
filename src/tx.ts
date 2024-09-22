@@ -101,6 +101,7 @@ export class Tx {
 
   stop(): void {
     this.jscw.stop();
+    this.stopEmitter.emit({ message: this.message });
   }
 
   public get wpm(): number {
@@ -180,11 +181,11 @@ export class Tx {
   }
 
   private handlePlayingCharacter(): void {
-    this.txCharIdx++;
     this.charEmitter.emit({
       message: this._message,
       idx: this.txCharIdx,
     });
+    this.txCharIdx++;
   }
 
   private saveConf() {

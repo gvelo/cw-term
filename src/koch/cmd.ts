@@ -63,7 +63,7 @@ export class KochCommand {
 
   public async exec(argv: string[]) {
     try {
-      this.parseKochCommand(argv);
+      await this.parseKochCommand(argv);
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.terminal.writeln(`Error: ${error.message}`);
@@ -73,7 +73,7 @@ export class KochCommand {
     }
   }
 
-  private parseKochCommand(argv: string[]) {
+  private async parseKochCommand(argv: string[]) {
     if (argv.length == 1) {
       this.printUsage();
       return;
@@ -94,10 +94,10 @@ export class KochCommand {
         this.execConfigCommand(this.parseConfigCommand(restArgs));
         break;
       case "listen":
-        this.execListenCommand(this.parseListenCommand(restArgs));
+        await this.execListenCommand(this.parseListenCommand(restArgs));
         break;
       case "practice":
-        this.execPracticeCommand(this.parsePracticeCommand(restArgs));
+        await this.execPracticeCommand(this.parsePracticeCommand(restArgs));
         break;
       case "lesson":
         this.execLessonCommand(this.parseLessonCommand(restArgs));
@@ -284,8 +284,8 @@ export class KochCommand {
     }
   }
 
-  private execListenCommand(cmd: KochListenCmd) {
-    console.log("Executing listen command with parameters:", cmd);
+  private async execListenCommand(cmd: KochListenCmd) {
+    await this.koch.listen({ ...cmd });
   }
 
   private execPracticeCommand(cmd: KochPracticeCmd) {

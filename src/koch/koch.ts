@@ -14,7 +14,7 @@
 
 import { ConfStorage } from "../config";
 import { Terminal } from "../Terminal";
-import { Tx } from "../tx";
+import { Tx, TxCharEvent } from "../tx";
 import { getLessonChars } from "./groups";
 import { theme } from "../theme";
 
@@ -120,7 +120,71 @@ export class Koch {
     this.showLesson(lessonNum);
   }
 
-  public listen(params: PlaybackParams): void {}
+  public async listen(params: PlaybackParams) {
+    return new Promise<void>((resolve) => {
+      let chars: string[] = [];
+      const lessonChars = getLessonChars(this.conf.currentLesson);
+
+      if (this.conf.currentLesson === 1) {
+        chars = [lessonChars.mainChar, ...lessonChars.secondaryChars];
+      } else {
+        chars = [lessonChars.mainChar];
+      }
+
+      let exit = false;
+      let i = 0;
+
+      this.terminal.writeln();
+      this.terminal.write(
+        theme.info(
+          `lesson:${this.conf.currentLesson} chars: ${chars.join(" ")}`
+        )
+      );
+      this.terminal.writeln("    press any key to stop...");
+      this.terminal.writeln();
+
+      const onTxStop = () => {
+        this.terminal.writeln();
+        if (exit) {
+          this.tx.removeStopEventListener(onTxStop);
+          this.tx.removeCharEventListener(onTxChar);
+          this.terminal.writeln();
+          resolve();
+          return;
+        }
+        i++;
+        txChar(chars[i % chars.length]);
+      };
+
+      const onTxChar = (event: TxCharEvent) => {
+        this.terminal.write(theme.info(event.message[event.idx]));
+      };
+
+      const txChar = (char: string) => {
+        this.tx.send(char.repeat(10) + " ");
+      };
+
+      const onKeyPressed = (event: KeyboardEvent): boolean => {
+        if (event.type == "keydown") {
+          this.terminal.removeKeyboardHanlder();
+          event.stopPropagation();
+          event.preventDefault();
+          exit = true;
+          this.tx.stop();
+          return false;
+        } else {
+          return true;
+        }
+      };
+
+      this.terminal.addKeyboardHandler(onKeyPressed);
+
+      this.tx.addStopEventListener(onTxStop);
+      this.tx.addCharEventListener(onTxChar);
+      window.addEventListener("keydown", onKeyPressed);
+      txChar(chars[0]);
+    });
+  }
   public practice(params: PlaybackParams): void {}
   public practiceCustomChars(
     mainChar: string,

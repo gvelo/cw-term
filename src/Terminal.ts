@@ -20,18 +20,20 @@ import { EventEmitter, EventListener } from "./emiter";
 
 export type ResizeEvent = { fit: boolean };
 export type ClearTTYEvent = "ClearTTYEvent";
-
+export type KeyboardHandler = (e: KeyboardEvent) => boolean;
 export class Terminal {
   private xterm: Xterm;
   private input: Readline;
   private fitAddon: FitAddon;
   private readonly resizeEmitter: EventEmitter<ResizeEvent>;
   private readonly clearTTYEmitter: EventEmitter<ClearTTYEvent>;
+  private keyboardHandler: KeyboardHandler | null;
   constructor(termDiv: HTMLElement) {
     this.resizeEmitter = new EventEmitter<ResizeEvent>();
     this.clearTTYEmitter = new EventEmitter<ClearTTYEvent>();
     this.fitAddon = new FitAddon();
     this.input = new Readline();
+    this.keyboardHandler = null;
 
     this.xterm = new Xterm({
       cursorBlink: true,
@@ -51,6 +53,8 @@ export class Terminal {
 
     this.fitAddon.fit();
     this.xterm.focus();
+
+    this.xterm.attachCustomKeyEventHandler(this.onKeyboardEvent);
 
     window.addEventListener("resize", this.onResize);
     this.xterm.parser.registerCsiHandler({ final: "J" }, () => {
@@ -83,12 +87,28 @@ export class Terminal {
     this.resizeEmitter.emit({ fit: true });
   };
 
+  private onKeyboardEvent = (e: KeyboardEvent): boolean => {
+    if (this.keyboardHandler) {
+      return this.keyboardHandler(e);
+    }
+
+    return true;
+  };
+
   public addResizeEventListener(listener: EventListener<ResizeEvent>): void {
     this.resizeEmitter.addListener(listener);
   }
 
   public addClearEventListener(listener: EventListener<ClearTTYEvent>): void {
     this.clearTTYEmitter.addListener(listener);
+  }
+
+  public addKeyboardHandler(handler: KeyboardHandler) {
+    this.keyboardHandler = handler;
+  }
+
+  public removeKeyboardHanlder(): void {
+    this.keyboardHandler = null;
   }
 
   public get cols(): number {
