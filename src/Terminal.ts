@@ -27,13 +27,12 @@ export class Terminal {
   private fitAddon: FitAddon;
   private readonly resizeEmitter: EventEmitter<ResizeEvent>;
   private readonly clearTTYEmitter: EventEmitter<ClearTTYEvent>;
-  private keyboardHandler: KeyboardHandler | null;
+  private keyboardHandler?: KeyboardHandler;
   constructor(termDiv: HTMLElement) {
     this.resizeEmitter = new EventEmitter<ResizeEvent>();
     this.clearTTYEmitter = new EventEmitter<ClearTTYEvent>();
     this.fitAddon = new FitAddon();
     this.input = new Readline();
-    this.keyboardHandler = null;
 
     this.xterm = new Xterm({
       cursorBlink: true,
@@ -88,11 +87,7 @@ export class Terminal {
   };
 
   private onKeyboardEvent = (e: KeyboardEvent): boolean => {
-    if (this.keyboardHandler) {
-      return this.keyboardHandler(e);
-    }
-
-    return true;
+    return this.keyboardHandler ? this.keyboardHandler(e) : true;
   };
 
   public addResizeEventListener(listener: EventListener<ResizeEvent>): void {
@@ -108,7 +103,7 @@ export class Terminal {
   }
 
   public removeKeyboardHanlder(): void {
-    this.keyboardHandler = null;
+    this.keyboardHandler = undefined;
   }
 
   public get cols(): number {

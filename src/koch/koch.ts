@@ -181,7 +181,6 @@ export class Koch {
 
       this.tx.addStopEventListener(onTxStop);
       this.tx.addCharEventListener(onTxChar);
-      window.addEventListener("keydown", onKeyPressed);
       txChar(chars[0]);
     });
   }
