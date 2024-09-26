@@ -15,7 +15,7 @@
 import { ConfStorage } from "../config";
 import { Terminal } from "../Terminal";
 import { Tx, TxCharEvent } from "../tx";
-import { getLessonChars } from "./groups";
+import { buildGroups, getLessonChars, checkGroups } from "./groups";
 import { theme } from "../theme";
 
 export interface PlaybackParams {
@@ -190,7 +190,100 @@ export class Koch {
       txChar(chars[0]);
     });
   }
-  public practice(params: PlaybackParams): void {}
+  public async practice(params: PlaybackParams) {
+    const lessonChars = getLessonChars(this.conf.currentLesson);
+
+    const groups = buildGroups(
+      lessonChars.mainChar,
+      lessonChars.secondaryChars,
+      this.conf.groupCount
+    );
+
+    const message = groups.join(" ");
+
+    this.tx.send(message, params.wpm, params.eff, params.freq, params.volume);
+
+    const line = await this.terminal.readLine("rx> ");
+
+    this.tx.stop();
+
+    const recvGroups = line
+      .toUpperCase()
+      .split(" ")
+      .filter((c) => c != " ");
+
+    const result = checkGroups(groups, recvGroups);
+
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info(`lesson: ${this.conf.currentLesson}`));
+    this.terminal.writeln(theme.info(`main char: ${lessonChars.mainChar}`));
+
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info("send\t\treceived"));
+
+    for (let i = 0; i < result.send.length; i++) {
+      this.printGroupWithError(result.send[i], result.errorsPos[i]);
+      this.terminal.write("\t\t  ");
+      this.printGroupWithError(result.recv[i], result.errorsPos[i]);
+      this.terminal.writeln();
+    }
+
+    this.terminal.writeln();
+    this.terminal.writeln("stats:");
+    this.terminal.writeln();
+
+    const charStats = Object.keys(result.charsStats)
+      .map((char) => ({
+        char,
+        total: result.charsStats[char].total,
+        errors: result.charsStats[char].errors,
+        accuracy: result.charsStats[char].accuracy,
+      }))
+      .sort((a, b) => a.accuracy - b.accuracy);
+
+    this.terminal.writeln("char    error/total   accuracy");
+    charStats.forEach((stat) => {
+      this.terminal.writeln(
+        ` ${stat.char}       ${stat.errors
+          .toString()
+          .padStart(3)}/${stat.total
+          .toString()
+          .padEnd(3)}      ${stat.accuracy.toFixed(2).padStart(6)}%`
+      );
+    });
+
+    this.terminal.writeln();
+
+    const charPassed = charStats.filter((stat) => stat.accuracy >= 80).length;
+
+    if (charPassed == charStats.length) {
+      this.terminal.writeln(
+        `Congratulations, all characters are above 80%. You passed the lesson.`
+      );
+      this.conf.lessonStatus[this.conf.currentLesson - 1] = "passed";
+      this.saveConf();
+    } else {
+      this.terminal.writeln(
+        `There are characters below 80%. You need to keep practicing.`
+      );
+    }
+
+    this.terminal.writeln();
+  }
+
+  private printGroupWithError(group: string, errors: number[]): void {
+    let posIndex = 0;
+    for (let i = 0; i < group.length; i++) {
+      const char = group[i];
+      if (posIndex < errors.length && i === errors[posIndex]) {
+        this.terminal.write(theme.errorChar(char));
+        posIndex++;
+      } else {
+        this.terminal.write(char);
+      }
+    }
+  }
+
   public practiceCustomChars(
     mainChar: string,
     secondaryChars: string[],
@@ -198,4 +291,7 @@ export class Koch {
   ): void {}
   public showConfig(): void {}
   public setCofig(key: string, value: string): void {}
+  private saveConf() {
+    this.storage.set(CONF_STORAGE_KEY, this.conf);
+  }
 }

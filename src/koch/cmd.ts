@@ -288,8 +288,8 @@ export class KochCommand {
     await this.koch.listen({ ...cmd });
   }
 
-  private execPracticeCommand(cmd: KochPracticeCmd) {
-    console.log("Executing practice command with parameters:", cmd);
+  private async execPracticeCommand(cmd: KochPracticeCmd) {
+    await this.koch.practice({...cmd});
   }
 
   private execLessonCommand(cmd: KochLessonCmd) {

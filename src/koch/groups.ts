@@ -153,3 +153,49 @@ export function getLessonChars(lessonNumber: number): Lesson {
   };
   return lesson;
 }
+
+export interface PracticeResult {
+  send: string[];
+  recv: string[];
+  errorsPos: number[][];
+  charsStats: {
+    [key: string]: {
+      total: number;
+      errors: number;
+      accuracy: number;
+    };
+  };
+}
+
+export function checkGroups(send: string[], recv: string[]): PracticeResult {
+  const result: PracticeResult = {
+    send: [],
+    recv: [],
+    errorsPos: [],
+    charsStats: {},
+  };
+
+  for (let i = 0; i < send.length; i++) {
+    const sentGroup = send[i];
+    const recvGroup = (recv[i] ?? "").padEnd(GROUP_LEN);
+    result.send.push(sentGroup);
+    result.recv.push(recvGroup);
+    const differingPositions: number[] = [];
+    for (let c = 0; c < sentGroup.length; c++) {
+      let stats = result.charsStats[sentGroup[c]] ?? {
+        total: 0,
+        errors: 0,
+        accuracy: 0,
+      };
+      result.charsStats[sentGroup[c]] = stats;
+      stats.total++;
+      if (sentGroup[c] !== recvGroup[c]) {
+        differingPositions.push(c);
+        stats.errors++;
+      }
+      stats.accuracy = ((stats.total - stats.errors) * 100) / stats.total;
+    }
+    result.errorsPos.push(differingPositions);
+  }
+  return result;
+}

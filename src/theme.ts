@@ -14,7 +14,7 @@
 
 import { Chalk, ChalkInstance } from "chalk";
 
-export const colors = new Chalk({ level: 3 });
+export const colors = new Chalk({ level: 1 });
 
 interface Theme {
   readonly error: ChalkInstance;
@@ -22,6 +22,7 @@ interface Theme {
   readonly statusBar: ChalkInstance;
   readonly passed: ChalkInstance;
   readonly pending: ChalkInstance;
+  readonly errorChar: ChalkInstance;
 }
 
 const defaultTheme: Theme = {
@@ -30,6 +31,7 @@ const defaultTheme: Theme = {
   statusBar: colors.bgBlueBright,
   passed: colors.green,
   pending: colors.redBright,
+  errorChar:colors.redBright,
 };
 
 export const theme = defaultTheme;
