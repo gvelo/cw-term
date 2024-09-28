@@ -320,8 +320,26 @@ export class Koch {
     }
   }
 
-  public showConfig(): void {}
-  public setCofig(key: string, value: string): void {}
+  public showConfig() {
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info("koch configuration:"));
+    this.terminal.writeln();
+    this.terminal.writeln(`group-count : ${theme.info(this.conf.groupCount)}`);
+    this.terminal.writeln();
+  }
+
+  public setCofig(key: string, value: string): void {
+    if (key != "group-count") {
+      throw new Error("unknown config value");
+    }
+    const groupCount = parseInt(value, 10);
+    if (isNaN(groupCount) || groupCount < 5) {
+      throw new Error("invalid configuration value");
+    }
+    this.conf.groupCount = groupCount;
+    this.terminal.writeln(`group-count : ${theme.info(this.conf.groupCount)}`);
+    this.saveConf();
+  }
   private saveConf() {
     this.storage.set(CONF_STORAGE_KEY, this.conf);
   }

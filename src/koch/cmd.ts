@@ -276,11 +276,11 @@ export class KochCommand {
 
   private execConfigCommand(cmd: KochConfigCmd) {
     if (cmd.show) {
-      console.log("Showing all config values...");
+      this.koch.showConfig();
     } else if (cmd.set) {
-      console.log(`Setting config key ${cmd.set.key} to ${cmd.set.value}`);
+      this.koch.setCofig(cmd.set.key, cmd.set.value);
     } else {
-      console.log("Unknown config command.");
+      throw new Error("Unknown config command.");
     }
   }
 
