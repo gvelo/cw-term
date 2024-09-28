@@ -102,7 +102,7 @@ export function buildGroups(
 
   const shuffledChars = shuffleArray(lessonChars);
 
-  let groups: string[] = [];
+  const groups: string[] = [];
 
   for (let i = 0; i < shuffledChars.length; i += GROUP_LEN) {
     groups.push(shuffledChars.slice(i, i + GROUP_LEN).join(""));
@@ -143,14 +143,33 @@ export interface Lesson {
   secondaryChars: string[];
 }
 
-export function getLessonChars(lessonNumber: number): Lesson {
+export function getLessonChars(
+  lessonNumber: number,
+  mainChar?: string
+): Lesson {
   if (lessonNumber > 40) {
     throw new Error("invalid lesson number");
   }
-  let lesson: Lesson = {
-    mainChar: MORSE_SYMBOLS[lessonNumber],
-    secondaryChars: MORSE_SYMBOLS.slice(0, lessonNumber),
-  };
+
+  let lesson: Lesson;
+
+  if (mainChar) {
+    const chars = MORSE_SYMBOLS.slice(0, lessonNumber + 1);
+
+    lesson = {
+      mainChar: mainChar,
+      secondaryChars: chars.filter((c) => c != mainChar),
+    };
+
+    if (chars.length == lesson.secondaryChars.length) {
+      throw new Error("main char not present in lesson");
+    }
+  } else {
+    lesson = {
+      mainChar: MORSE_SYMBOLS[lessonNumber],
+      secondaryChars: MORSE_SYMBOLS.slice(0, lessonNumber),
+    };
+  }
   return lesson;
 }
 
@@ -159,12 +178,11 @@ export interface PracticeResult {
   recv: string[];
   errorsPos: number[][];
   charsStats: {
-    [key: string]: {
-      total: number;
-      errors: number;
-      accuracy: number;
-    };
-  };
+    char: string;
+    total: number;
+    errors: number;
+    accuracy: number;
+  }[];
 }
 
 export function checkGroups(send: string[], recv: string[]): PracticeResult {
@@ -172,8 +190,16 @@ export function checkGroups(send: string[], recv: string[]): PracticeResult {
     send: [],
     recv: [],
     errorsPos: [],
-    charsStats: {},
+    charsStats: [],
   };
+
+  const charsStatsMap: {
+    [key: string]: {
+      total: number;
+      errors: number;
+      accuracy: number;
+    };
+  } = {};
 
   for (let i = 0; i < send.length; i++) {
     const sentGroup = send[i];
@@ -182,12 +208,12 @@ export function checkGroups(send: string[], recv: string[]): PracticeResult {
     result.recv.push(recvGroup);
     const differingPositions: number[] = [];
     for (let c = 0; c < sentGroup.length; c++) {
-      let stats = result.charsStats[sentGroup[c]] ?? {
+      const stats = charsStatsMap[sentGroup[c]] ?? {
         total: 0,
         errors: 0,
         accuracy: 0,
       };
-      result.charsStats[sentGroup[c]] = stats;
+      charsStatsMap[sentGroup[c]] = stats;
       stats.total++;
       if (sentGroup[c] !== recvGroup[c]) {
         differingPositions.push(c);
@@ -197,5 +223,15 @@ export function checkGroups(send: string[], recv: string[]): PracticeResult {
     }
     result.errorsPos.push(differingPositions);
   }
+
+  result.charsStats = Object.keys(charsStatsMap)
+    .map((char) => ({
+      char,
+      total: charsStatsMap[char].total,
+      errors: charsStatsMap[char].errors,
+      accuracy: charsStatsMap[char].accuracy,
+    }))
+    .sort((a, b) => a.accuracy - b.accuracy);
+
   return result;
 }

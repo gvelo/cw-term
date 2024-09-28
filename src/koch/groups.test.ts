@@ -44,6 +44,18 @@ describe("test groups", () => {
       console.log(getLessonChars(i));
     }
   });
+
+  test("test lesson chars with main", () => {
+    const lesson = getLessonChars(5, "R");
+    expect(lesson.mainChar).toEqual("R");
+    expect(lesson.secondaryChars).toEqual(["K", "M", "U", "E", "S"]);
+  });
+
+  test("test lesson chars with main error", () => {
+    expect(() => getLessonChars(5, "X")).toThrow(
+      new Error("main char not present in lesson")
+    );
+  });
 });
 
 function countCharRepetitions(groups: Array<string>): {

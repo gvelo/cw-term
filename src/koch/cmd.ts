@@ -289,11 +289,28 @@ export class KochCommand {
   }
 
   private async execPracticeCommand(cmd: KochPracticeCmd) {
-    await this.koch.practice({...cmd});
+    if (!cmd.mainChar && !cmd.secondaryChars) {
+      await this.koch.practice({ ...cmd });
+      return;
+    }
+
+    // Both mainChar and secondaryChars must be specified for custom groups
+    if (!cmd.mainChar || !cmd.secondaryChars) {
+      throw new Error(
+        "main char and secondary char should be specified when working with custom groups"
+      );
+    }
+
+    // Call the practice method with custom characters
+    await this.koch.practiceCustomChars(
+      cmd.mainChar,
+      cmd.secondaryChars.toUpperCase().split(""),
+      { ...cmd },
+      cmd.groupsCount
+    );
   }
 
   private execLessonCommand(cmd: KochLessonCmd) {
-    console.log(cmd);
     if (cmd.list) {
       this.koch.listLessons();
     } else if (cmd.show != undefined) {

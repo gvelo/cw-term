@@ -15,7 +15,12 @@
 import { ConfStorage } from "../config";
 import { Terminal } from "../Terminal";
 import { Tx, TxCharEvent } from "../tx";
-import { buildGroups, getLessonChars, checkGroups } from "./groups";
+import {
+  buildGroups,
+  getLessonChars,
+  checkGroups,
+  PracticeResult,
+} from "./groups";
 import { theme } from "../theme";
 
 export interface PlaybackParams {
@@ -25,7 +30,6 @@ export interface PlaybackParams {
   freq?: number;
 }
 
-const LESSON_COUNT = 41;
 const CONF_STORAGE_KEY = "koch";
 
 type LessonStatus = "pending" | "passed";
@@ -34,6 +38,7 @@ interface Config {
   lessonStatus: LessonStatus[];
   currentLesson: number;
   groupCount: number;
+  charToImprove: string | null;
 }
 
 export class Koch {
@@ -47,7 +52,7 @@ export class Koch {
     this.tx = tx;
     this.storage = storage;
 
-    let conf = storage.get(CONF_STORAGE_KEY);
+    const conf = storage.get(CONF_STORAGE_KEY);
     if (conf) {
       this.conf = conf;
     } else {
@@ -55,6 +60,7 @@ export class Koch {
         lessonStatus: Array(40).fill("pending"),
         currentLesson: 1,
         groupCount: 12,
+        charToImprove: null,
       };
       storage.set(CONF_STORAGE_KEY, conf);
     }
@@ -190,14 +196,75 @@ export class Koch {
       txChar(chars[0]);
     });
   }
-  public async practice(params: PlaybackParams) {
-    const lessonChars = getLessonChars(this.conf.currentLesson);
 
-    const groups = buildGroups(
+  public async practice(params: PlaybackParams) {
+    const lessonChars = getLessonChars(
+      this.conf.currentLesson,
+      this.conf.charToImprove ?? undefined
+    );
+
+    const result = await this.practiceGroups(
       lessonChars.mainChar,
       lessonChars.secondaryChars,
-      this.conf.groupCount
+      this.conf.groupCount,
+      params
     );
+
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info(`lesson: ${this.conf.currentLesson}`));
+
+    this.printResult(result);
+
+    this.terminal.writeln();
+
+    const charPassed = result.charsStats.filter(
+      (stat) => stat.accuracy >= 80
+    ).length;
+
+    if (charPassed == result.charsStats.length) {
+      this.terminal.writeln(
+        `Congratulations, all characters are above 80%. You passed the lesson.`
+      );
+      this.conf.lessonStatus[this.conf.currentLesson - 1] = "passed";
+      this.conf.charToImprove = null;
+    } else {
+      this.terminal.writeln(
+        `There are characters below 80%. You need to keep practicing.`
+      );
+      this.conf.charToImprove = result.charsStats[0].char;
+    }
+    this.saveConf();
+    this.terminal.writeln();
+  }
+
+  public async practiceCustomChars(
+    mainChar: string,
+    secondaryChars: string[],
+    params: PlaybackParams,
+    groupCount?: number
+  ) {
+    const result = await this.practiceGroups(
+      mainChar,
+      secondaryChars,
+      groupCount ?? this.conf.groupCount,
+      params
+    );
+
+    this.terminal.writeln();
+    this.terminal.writeln(theme.info(`custom groups:`));
+
+    this.printResult(result);
+
+    this.terminal.writeln();
+  }
+
+  public async practiceGroups(
+    mainChar: string,
+    secondaryChars: string[],
+    groupCount: number,
+    params: PlaybackParams
+  ): Promise<PracticeResult> {
+    const groups = buildGroups(mainChar, secondaryChars, groupCount);
 
     const message = groups.join(" ");
 
@@ -212,12 +279,10 @@ export class Koch {
       .split(" ")
       .filter((c) => c != " ");
 
-    const result = checkGroups(groups, recvGroups);
+    return checkGroups(groups, recvGroups);
+  }
 
-    this.terminal.writeln();
-    this.terminal.writeln(theme.info(`lesson: ${this.conf.currentLesson}`));
-    this.terminal.writeln(theme.info(`main char: ${lessonChars.mainChar}`));
-
+  private printResult(result: PracticeResult): void {
     this.terminal.writeln();
     this.terminal.writeln(theme.info("send\t\treceived"));
 
@@ -232,43 +297,14 @@ export class Koch {
     this.terminal.writeln("stats:");
     this.terminal.writeln();
 
-    const charStats = Object.keys(result.charsStats)
-      .map((char) => ({
-        char,
-        total: result.charsStats[char].total,
-        errors: result.charsStats[char].errors,
-        accuracy: result.charsStats[char].accuracy,
-      }))
-      .sort((a, b) => a.accuracy - b.accuracy);
-
     this.terminal.writeln("char    error/total   accuracy");
-    charStats.forEach((stat) => {
+    result.charsStats.forEach((stat) => {
       this.terminal.writeln(
-        ` ${stat.char}       ${stat.errors
-          .toString()
-          .padStart(3)}/${stat.total
+        ` ${stat.char}       ${stat.errors.toString().padStart(3)}/${stat.total
           .toString()
           .padEnd(3)}      ${stat.accuracy.toFixed(2).padStart(6)}%`
       );
     });
-
-    this.terminal.writeln();
-
-    const charPassed = charStats.filter((stat) => stat.accuracy >= 80).length;
-
-    if (charPassed == charStats.length) {
-      this.terminal.writeln(
-        `Congratulations, all characters are above 80%. You passed the lesson.`
-      );
-      this.conf.lessonStatus[this.conf.currentLesson - 1] = "passed";
-      this.saveConf();
-    } else {
-      this.terminal.writeln(
-        `There are characters below 80%. You need to keep practicing.`
-      );
-    }
-
-    this.terminal.writeln();
   }
 
   private printGroupWithError(group: string, errors: number[]): void {
@@ -284,11 +320,6 @@ export class Koch {
     }
   }
 
-  public practiceCustomChars(
-    mainChar: string,
-    secondaryChars: string[],
-    params: PlaybackParams
-  ): void {}
   public showConfig(): void {}
   public setCofig(key: string, value: string): void {}
   private saveConf() {
