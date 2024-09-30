@@ -120,6 +120,7 @@ export class Koch {
     }
 
     this.conf.currentLesson = lessonNum;
+    this.conf.charToImprove = null;
 
     this.terminal.writeln();
     this.terminal.writeln(theme.info(`lesson set to : ${lessonNum}`));

@@ -79,14 +79,19 @@ export function buildGroups(
   const lessonChars = new LessonChars();
   lessonChars.addCharacter(mainChar, mainLessonCharCount);
 
-  let secRepetitionCount = secondaryLessonCharCount / secondaryChars.length;
+  let secRepetitionCount = Math.floor(
+    secondaryLessonCharCount / secondaryChars.length
+  );
+
   let secRepetitionRemainder = secondaryLessonCharCount % secondaryChars.length;
   let secondaryCharsToAdd = [...secondaryChars];
 
   if (secRepetitionCount < MIN_CHAR_REPETITIONS) {
-    secRepetitionCount = MIN_CHAR_REPETITIONS;
-    const secCharCount = secondaryLessonCharCount / MIN_CHAR_REPETITIONS;
+    const secCharCount = Math.floor(
+      secondaryLessonCharCount / MIN_CHAR_REPETITIONS
+    );
     secondaryCharsToAdd = shuffleArray(secondaryChars).slice(0, secCharCount);
+    secRepetitionCount = Math.floor(secondaryLessonCharCount / secCharCount);
     secRepetitionRemainder = secondaryLessonCharCount % secCharCount;
   }
 
