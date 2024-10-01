@@ -42,38 +42,6 @@ export class TxCommand {
     this.tx = tx;
   }
 
-  printUsage(): void {
-    this.terminal.writeln(`
-Usage: tx <command> [options]
-
-Commands:
-  config                       Show the tx config values
-  config --show                Show the tx config values
-  config --set <property> <value>  Set a config property value
-
-  Available properties for config --set:
-    wpm     Set the character speed (words per minute)
-    eff     Set the effective speed
-    freq    Set the tone frequency (Hertz)
-    volume  Set the volume (0-100)
-
-  send [options] <message>     Send a Morse code message
-
-Options for send:
-  --wpm <int>     Set the character speed for this message
-  --eff <int>     Set the effective speed for this message
-  --freq <int>    Set the tone frequency for this message
-  --volume <int>  Set the volume for this message (0-100)
-
-Examples:
-  tx config
-  tx config --set wpm 20
-  tx config --set volume 75
-  tx send "Hello World"
-  tx send --eff 15 --wpm 20 "CQ CQ CQ"
-`);
-  }
-
   async exec(args: string[]) {
     // Remove the first two elements (node executable and script name)
     const [command, ...restArgs] = args.slice(1);
@@ -87,11 +55,14 @@ Examples:
           break;
         case "--help":
         case "-h":
-          this.printUsage();
+          this.showUsage();
+          break;
+        case "help":
+          this.showHelp(restArgs);
           break;
         default:
           this.terminal.writeln('Invalid command. Use "config" or "send".');
-          this.printUsage();
+          this.showUsage();
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -213,5 +184,122 @@ Examples:
       this.tx.addStopEventListener(onTxStop);
       this.tx.send(cmd.message, cmd.wpm, cmd.eff, cmd.freq, cmd.volume);
     });
+  }
+
+  private showHelp(args: string[]): void {
+    if (args.length == 0) {
+      this.showUsage();
+    } else {
+      switch (args[0]) {
+        case "send":
+          this.showTxUsage();
+          break;
+        case "config":
+          this.showConfigUsage();
+          break;
+        default:
+          throw new Error("unknown command");
+      }
+    }
+  }
+
+  private showUsage(): void {
+    this.terminal.writeln(
+      theme.info(`
+Usage: tx [-h | --help] <command>
+
+The tx command  allows you to transmit arbitrary text in Morse code. You can 
+configure various transmission parameters such as speed, effective speed, 
+and tone frequency to customize the transmission experience. This command 
+supports different subcommands for configuring settings, sending messages, 
+and displaying help.
+
+These are the available tx commands:
+
+  config:
+    Configure transmission parameters, such as words per minute (WPM), 
+    effective speed (EFF), and tone frequency. You can view or modify 
+    configuration values to customize the transmission settings.
+
+  send:
+    Transmit an arbitrary piece of text as Morse code. You can customize 
+    the speed, tone, and other parameters when sending the message.
+
+  help:
+    Show detailed help for the tx command or any of its subcommands.
+
+For more information on specific commands, use:
+
+  tx help <subcommand>
+`)
+    );
+  }
+  private showConfigUsage(): void {
+    this.terminal.writeln(
+      theme.info(`
+Usage: tx config [ --show ] [ --set <property> <value> ]
+
+Description:
+  The \`config\` subcommand allows you to view and modify the transmission 
+  parameters for the \`tx\` command. You can configure the speed, effective 
+  speed, tone frequency, and volume for Morse code transmission. You can 
+  either view the current configuration values or set new ones.
+
+Options:
+
+  --show
+    Display the current configuration values for the TX method, including 
+    speed, effective speed, tone frequency, and volume.
+
+  --set <property> <value>
+    Set a specific configuration value. You can adjust the following properties:
+    
+      wpm:
+        Set the character speed in words per minute.
+
+      eff:
+        Set the effective speed in words per minute.
+
+      freq:
+        Set the tone frequency in Hertz for the Morse code transmission.
+
+      volume:
+        Set the transmission volume (from 0 to 100).
+
+`)
+    );
+  }
+  private showTxUsage(): void {
+    this.terminal.writeln(
+      theme.info(`
+Usage: tx send [options] <message>
+
+Description:
+  The \`send\` subcommand allows you to transmit an arbitrary message in Morse 
+  code. You can customize various transmission parameters such as character 
+  speed, effective speed, tone frequency, and volume for the message you are 
+  sending. The message is transmitted based on the configuration values or 
+  any specified options for this particular transmission.
+
+Options:
+
+  --wpm <int>
+    Set the character speed (words per minute) for this message. Overrides 
+    the default configuration value for WPM.
+
+  --eff <int>
+    Set the effective speed (words per minute) for this message. Overrides 
+    the default configuration value for effective speed.
+
+  --freq <int>
+    Set the tone frequency (in Hertz) for this message. Overrides the default 
+    configuration value for frequency.
+
+  --volume <int>
+    Set the volume (0 to 100) for this message. Overrides the default 
+    configuration value for volume.
+
+`)
+    );
   }
 }
