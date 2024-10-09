@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && webpack --config webpack.config.js",
+    "release": "tsc && webpack --mode=production --config webpack.config.js",
     "lint": "eslint src/",
     "test": "tsc && jest"
   },
