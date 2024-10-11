@@ -58,6 +58,7 @@ export class RootApp {
           this.showUsage();
           break;
         case "koch":
+          this.statusBar.setCmd("koch");
           await this.kochCmd.exec(argv);
           break;
         case "tx":
