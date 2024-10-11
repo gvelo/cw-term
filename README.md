@@ -1,4 +1,4 @@
-# CW-Term:
+# cw-term
 
 `cw-term` is a simple yet powerful Morse code training program designed to help amateur radio operators and Morse enthusiasts improve their CW  abilities. It provides various training modes, including the popular Koch method, callsign training, QSO simulations, and arbitrary text transmission.
 
