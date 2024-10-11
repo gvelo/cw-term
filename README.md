@@ -33,3 +33,7 @@
     tx --help
     ```
 
+## Acknowledgements
+
+This project would not have been possible without the awesome **jscwlib**, created by [Fabian Kurz, DJ5CW](https://fkurz.net/ham/jscwlib.html).
+
