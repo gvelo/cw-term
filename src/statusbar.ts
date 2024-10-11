@@ -1,4 +1,4 @@
-// Copyright 2024 The cw-console authors.
+// Copyright 2024 The cw-term authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ export class StatusBar {
     const txCharIdx = String(this.txCharIdx).padStart(3);
     const msgLength = String(this.msgLenght).padEnd(3);
     const pad = " ".repeat(padding);
-    const statusBar = `cw-terminal | command:${paddedCmd}  status:${paddedStatus} ${progressBar} ${txCharIdx}/${msgLength} ${pad}wpm:${this.tx.wpm}  eff:${this.tx.eff}  tone:${this.tx.freq}Hz  volume:${this.tx.volume}`;
+    const statusBar = `cw-term | command:${paddedCmd}  status:${paddedStatus} ${progressBar} ${txCharIdx}/${msgLength} ${pad}wpm:${this.tx.wpm}  eff:${this.tx.eff}  tone:${this.tx.freq}Hz  volume:${this.tx.volume}`;
     return statusBar;
   }
 

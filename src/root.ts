@@ -1,4 +1,4 @@
-// Copyright 2024 The cw-console authors.
+// Copyright 2024 The cw-term authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ export class RootApp {
   async start() {
     this.showWellcome();
     while (true) {
-      const prompt = "cw-console: ";
+      const prompt = "cw-term: ";
       const line = await this.terminal.readLine(prompt);
       if (line) {
         await this.processLine(line);
@@ -112,13 +112,16 @@ export class RootApp {
 
   private showWellcome(): void {
     this.terminal.writeln(`
-                                            _       
-  ____ _ _ _     ____ ___  ____   ___  ___ | | ____ 
- / ___) | | |   / ___) _ \\|  _ \\ /___)/ _ \\| |/ _  )
-( (___| | | |  ( (__| |_| | | | |___ | |_| | ( (/ / 
- \\____)\\____|   \\____)___/|_| |_(___/ \\___/|_|\\____)
 
-type 'help' if you are new!                    (v0.0.1)  
+                          __                        
+  ______  _  __         _/  |_  ___________  _____  
+_/ ___\\ \\/ \\/ /  ______ \\   __\\/ __ \\_  __ \\/     \\ 
+\\  \\___\\     /  /_____/  |  | \\  ___/|  | \\/  Y Y  \\
+ \\___  >\\/\\_/            |__|  \\___  >__|  |__|_|  /
+     \\/                            \\/            \\/ 
+
+
+type 'help' if you are new!                (v0.0.1)  
 
   `);
   }
@@ -127,7 +130,7 @@ type 'help' if you are new!                    (v0.0.1)
     this.terminal.writeln(
       theme.info(`
 
-cw-console is a simple Morse code training program designed to help you improve
+cw-term is a simple Morse code training program designed to help you improve
 your CW (Continuous Wave) abilities. The following subcommands provide various 
 methods to practice and enhance your skills:
 

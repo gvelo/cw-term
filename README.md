@@ -1,6 +1,6 @@
-# CW-Console:
+# CW-Term:
 
-`cw-console` is a simple yet powerful Morse code training program designed to help amateur radio operators and Morse enthusiasts improve their CW  abilities. It provides various training modes, including the popular Koch method, callsign training, QSO simulations, and arbitrary text transmission.
+`cw-term` is a simple yet powerful Morse code training program designed to help amateur radio operators and Morse enthusiasts improve their CW  abilities. It provides various training modes, including the popular Koch method, callsign training, QSO simulations, and arbitrary text transmission.
 
 ## Features
 
@@ -11,7 +11,7 @@
 
 ## Usage
 
-`cw-console` provides the following subcommands to help you train Morse code:
+`cw-term` provides the following subcommands to help you train Morse code:
 
 - **Koch Method**: Train Morse code using the Koch method, gradually increasing the number of characters.
     ```bash
